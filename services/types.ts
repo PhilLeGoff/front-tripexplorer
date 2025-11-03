@@ -3,6 +3,9 @@ export interface User {
   email: string
   first_name: string
   last_name: string
+  selected_profile?: 'tourist' | 'local' | 'pro'
+  selected_country?: string
+  selected_city?: string
 }
 
 export interface AuthResponse {
@@ -16,6 +19,9 @@ export interface SignUpRequest {
   first_name: string
   last_name: string
   password: string
+  profile?: 'tourist' | 'local' | 'pro'
+  selected_country?: string
+  selected_city?: string
 }
 
 export interface SignInRequest {
@@ -71,6 +77,7 @@ export interface SearchParams {
   lng?: number
   radius_m?: number
   limit?: number
+  profile?: 'tourist' | 'local' | 'pro'
 }
 
 export interface CompilationItem {

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -80,12 +81,55 @@ export function TripsPage() {
       setError(err.message || "Failed to delete trip")
     }
   }
+  const TripCardSkeleton = () => (
+    <Card className="overflow-hidden">
+      <CardHeader className="p-0">
+        <AspectRatio ratio={16 / 9}>
+          <Skeleton className="h-full w-full" />
+        </AspectRatio>
+      </CardHeader>
+      <CardContent className="space-y-4 p-4">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-5 w-14" />
+        </div>
+      </CardContent>
+      <CardFooter className="gap-2 p-4 pt-0">
+        <Skeleton className="h-9 flex-1" />
+        <Skeleton className="h-9 w-9" />
+      </CardFooter>
+    </Card>
+  )
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-muted-foreground">Loading trips...</div>
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-48" />
+              <Skeleton className="h-5 w-64" />
+            </div>
+            <Skeleton className="h-10 w-40" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-64" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <TripCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
         </main>
         <Footer />
       </div>

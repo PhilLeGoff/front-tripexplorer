@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Header } from "@/components/shared/Header"
 import { Footer } from "@/components/shared/Footer"
 import { attractionsService, type Attraction, getPlacePhotoUrl, compilationsService, type Compilation } from "@/services"
-import { Star, Clock, DollarSign, MapPin, Calendar, Users, Heart, Share2, Phone, Mail, ExternalLink, Check, Accessibility } from "lucide-react"
+import { loadGoogleMaps } from "@/lib/googleMaps"
+import { Star, Clock, DollarSign, MapPin, Calendar, Users, Heart, Share2, Phone, Mail, ExternalLink, Check, Accessibility, X } from "lucide-react"
 
 export function AttractionDetailPage({ id }: { id: string }) {
   const [attraction, setAttraction] = useState<Attraction | null>(null)
@@ -18,6 +20,11 @@ export function AttractionDetailPage({ id }: { id: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [savedInfo, setSavedInfo] = useState<{ compilationId: number; attractionId: number } | null>(null)
+  const [isMapOpen, setIsMapOpen] = useState(false)
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
 
   useEffect(() => {
     if (!id) {
@@ -77,6 +84,100 @@ export function AttractionDetailPage({ id }: { id: string }) {
     fetchData()
   }, [id])
 
+  // Load Google Maps when map dialog opens
+  useEffect(() => {
+    if (isMapOpen && !isGoogleLoaded) {
+      loadGoogleMaps()
+        .then(() => setIsGoogleLoaded(true))
+        .catch(() => setIsGoogleLoaded(false))
+    }
+  }, [isMapOpen, isGoogleLoaded])
+
+  // Initialize map when dialog opens and Google Maps is loaded
+  useEffect(() => {
+    if (!isMapOpen || !isGoogleLoaded || !attraction || !mapRef.current) return
+
+    const gm = (window as any).google?.maps
+    if (!gm) return
+
+    // Get attraction location
+    const location = (attraction as any).location || {}
+    const lat = location.lat ?? (attraction as any).latitude
+    const lng = location.lng ?? (attraction as any).longitude
+
+    if (!lat || !lng) {
+      console.error('Attraction location not available')
+      return
+    }
+
+    const center = { lat: parseFloat(String(lat)), lng: parseFloat(String(lng)) }
+
+    // Clear existing map instance if any
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current = null
+    }
+    if (markerRef.current) {
+      markerRef.current.setMap(null)
+      markerRef.current = null
+    }
+
+    // Wait for container to be ready
+    const timeoutId = setTimeout(() => {
+      if (!mapRef.current) return
+
+      try {
+        // Create map
+        mapInstanceRef.current = new gm.Map(mapRef.current, {
+          center,
+          zoom: 15,
+          mapTypeControl: false,
+          streetViewControl: false,
+          zoomControl: true,
+        })
+
+        // Add marker
+        markerRef.current = new gm.Marker({
+          position: center,
+          map: mapInstanceRef.current,
+          title: attraction.name,
+        })
+
+        // Add info window
+        const infoWindow = new gm.InfoWindow({
+          content: `
+            <div style="padding: 8px;">
+              <h3 style="margin: 0 0 4px 0; font-weight: 600;">${attraction.name}</h3>
+              <p style="margin: 0; color: #666; font-size: 14px;">${attraction.formatted_address || ''}</p>
+            </div>
+          `,
+        })
+        infoWindow.open(mapInstanceRef.current, markerRef.current)
+
+        // Open info window when marker is clicked
+        markerRef.current.addListener('click', () => {
+          infoWindow.open(mapInstanceRef.current, markerRef.current)
+        })
+      } catch (error) {
+        console.error('Error initializing map:', error)
+      }
+    }, 100)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (markerRef.current) {
+        markerRef.current.setMap(null)
+        markerRef.current = null
+      }
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current = null
+      }
+      // Clear map container when dialog closes
+      if (!isMapOpen && mapRef.current) {
+        mapRef.current.innerHTML = ''
+      }
+    }
+  }, [isMapOpen, isGoogleLoaded, attraction])
+
   const handleToggleTrip = async () => {
     if (!attraction) return
     try {
@@ -130,7 +231,10 @@ export function AttractionDetailPage({ id }: { id: string }) {
   const imageUrl = attraction.photo_reference 
     ? getPlacePhotoUrl(attraction.photo_reference, 1200)
     : "/placeholder.svg"
-  const openingHours = attraction.opening_hours as Record<string, string> || {}
+  const openingHours = (attraction.opening_hours as {
+    open_now?: boolean;
+    weekday_text?: string[];
+  }) || {}
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -245,14 +349,32 @@ export function AttractionDetailPage({ id }: { id: string }) {
                     <CardTitle>Hours of Operation</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {Object.keys(openingHours).length > 0 ? (
-                        Object.entries(openingHours).map(([day, hours]) => (
-                          <div key={day} className="flex items-center justify-between text-sm">
-                            <span className="font-medium capitalize">{day}</span>
-                            <span className="text-muted-foreground">{String(hours)}</span>
-                          </div>
-                        ))
+                    <div className="space-y-3">
+                      {/* Open Now Status */}
+                      {openingHours.open_now !== undefined && (
+                        <div className="flex items-center gap-2 pb-2 border-b">
+                          <div className={`h-2 w-2 rounded-full ${openingHours.open_now ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className="text-sm font-medium">
+                            {openingHours.open_now ? 'Open Now' : 'Closed Now'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Weekday Text - Hours of Operation */}
+                      {openingHours.weekday_text && openingHours.weekday_text.length > 0 ? (
+                        <div className="space-y-2">
+                          {openingHours.weekday_text.map((dayHours: string, index: number) => {
+                            // Split "Monday: Open 24 hours" into day and hours
+                            const [day, ...hoursParts] = dayHours.split(':')
+                            const hours = hoursParts.join(':').trim()
+                            return (
+                              <div key={index} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{day.trim()}</span>
+                                <span className="text-muted-foreground">{hours || 'Closed'}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">Hours not available</div>
                       )}
@@ -402,7 +524,11 @@ export function AttractionDetailPage({ id }: { id: string }) {
                     </div>
                   </div>
                 )}
-                <Button variant="outline" className="w-full mt-4 bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4 bg-transparent"
+                  onClick={() => setIsMapOpen(true)}
+                >
                   <MapPin className="mr-2 h-4 w-4" />
                   View on Map
                 </Button>
@@ -426,6 +552,28 @@ export function AttractionDetailPage({ id }: { id: string }) {
           </div>
         </div>
       </main>
+      
+      {/* Map Dialog */}
+      <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+        <DialogContent className="max-w-4xl w-full p-0">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle>{attraction?.name} - Location</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <div ref={mapRef} className="w-full h-[500px] rounded-lg border bg-muted/10">
+              {!isGoogleLoaded && (
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <MapPin className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                    <p className="text-sm">Loading map...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   )

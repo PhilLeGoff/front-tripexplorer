@@ -13,15 +13,28 @@ function SearchContent() {
   const category = searchParams.get("category") || ""
   const minRating = searchParams.get("minRating") || ""
   const maxPrice = searchParams.get("maxPrice") || ""
+  const lat = searchParams.get("lat") || ""
+  const lng = searchParams.get("lng") || ""
+  const radius = searchParams.get("radius_m") || ""
 
   return (
     <>
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-2 py-8">
         <SearchHeader initialQuery={query} />
-        <div className="mt-8 grid gap-8 lg:grid-cols-[320px_1fr]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
           <AdvancedFilters initialCategory={category} initialMinRating={minRating} initialMaxPrice={maxPrice} />
-          <SearchResults query={query} category={category} minRating={minRating} maxPrice={maxPrice} />
+          <div className="w-full min-w-0 max-w-full overflow-hidden">
+            <SearchResults 
+            query={query} 
+            category={category} 
+            minRating={minRating} 
+            maxPrice={maxPrice}
+            lat={lat}
+            lng={lng}
+            radius={radius}
+          />
+          </div>
         </div>
       </main>
     </>

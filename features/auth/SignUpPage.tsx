@@ -46,6 +46,7 @@ export function SignUpPage() {
     confirmPassword: "",
     country: "",
     city: "",
+    profile: "tourist" as "tourist" | "local" | "pro",
     agreeToTerms: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -79,6 +80,9 @@ export function SignUpPage() {
         first_name: formData.firstName,
         last_name: formData.lastName,
         password: formData.password,
+        profile: formData.profile,
+        selected_country: formData.country,
+        selected_city: formData.city,
       })
       router.push("/search")
     } catch (error: any) {
@@ -224,6 +228,21 @@ export function SignUpPage() {
                     </div>
                     {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
                   </div>
+                </div>
+
+                {/* Profile Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="profile">User Profile</Label>
+                  <Select value={formData.profile} onValueChange={(value: "tourist" | "local" | "pro") => handleChange("profile", value)}>
+                    <SelectTrigger id="profile">
+                      <SelectValue placeholder="Select your profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tourist">Tourist - Discover popular attractions and landmarks</SelectItem>
+                      <SelectItem value="local">Local - Find hidden gems and local favorites</SelectItem>
+                      <SelectItem value="pro">Professional - Business centers and efficient amenities</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Location Fields */}

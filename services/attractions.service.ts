@@ -27,15 +27,31 @@ class AttractionsService {
     return this.normalizeAttraction(res)
   }
 
-  async getPopular(country: string = 'France', limit: number = 20): Promise<Attraction[]> {
-    const res = await apiClient.get<Attraction[]>('/attractions/popular/', {
-      country,
-      limit,
-    })
+  async getPopular(country: string = 'France', limit: number = 20, profile?: 'tourist' | 'local' | 'pro'): Promise<Attraction[]> {
+    const params: any = { country, limit }
+    // Automatically add user profile if available and not provided
+    if (!profile && typeof window !== 'undefined') {
+      const storedProfile = localStorage.getItem('user_profile')
+      if (storedProfile) {
+        params.profile = storedProfile
+      }
+    } else if (profile) {
+      params.profile = profile
+    }
+    const res = await apiClient.get<Attraction[]>('/attractions/popular/', params)
     return (res || []).map(r => this.normalizeAttraction(r))
   }
 
   async search(params: SearchParams): Promise<Attraction[]> {
+    // Automatically add user profile if not already set in params
+    // (SearchResults explicitly sets it, but this is a fallback for other callers)
+    if (typeof window !== 'undefined' && !params.profile) {
+      const profile = localStorage.getItem('user_profile')
+      if (profile) {
+        params.profile = profile as 'tourist' | 'local' | 'pro'
+      }
+    }
+    // Ensure profile is explicitly sent in the request
     const res = await apiClient.get<Attraction[]>('/attractions/search/', params)
     return (res || []).map(r => this.normalizeAttraction(r))
   }

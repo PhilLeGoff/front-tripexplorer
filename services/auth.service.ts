@@ -5,11 +5,21 @@ class AuthService {
   async signup(data: SignUpRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/signup/', data)
     
-    // Store tokens
+    // Store tokens and user profile
     if (typeof window !== 'undefined') {
       localStorage.setItem('access_token', response.access)
       localStorage.setItem('refresh_token', response.refresh)
       localStorage.setItem('user', JSON.stringify(response.user))
+      // Store profile for search requests
+      if (response.user.selected_profile) {
+        localStorage.setItem('user_profile', response.user.selected_profile)
+      }
+      if (response.user.selected_country) {
+        localStorage.setItem('user_country', response.user.selected_country)
+      }
+      if (response.user.selected_city) {
+        localStorage.setItem('user_city', response.user.selected_city)
+      }
     }
     
     return response
@@ -18,11 +28,21 @@ class AuthService {
   async signin(data: SignInRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/signin/', data)
     
-    // Store tokens
+    // Store tokens and user profile
     if (typeof window !== 'undefined') {
       localStorage.setItem('access_token', response.access)
       localStorage.setItem('refresh_token', response.refresh)
       localStorage.setItem('user', JSON.stringify(response.user))
+      // Store profile for search requests
+      if (response.user.selected_profile) {
+        localStorage.setItem('user_profile', response.user.selected_profile)
+      }
+      if (response.user.selected_country) {
+        localStorage.setItem('user_country', response.user.selected_country)
+      }
+      if (response.user.selected_city) {
+        localStorage.setItem('user_city', response.user.selected_city)
+      }
     }
     
     return response
@@ -60,6 +80,9 @@ class AuthService {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user')
+      localStorage.removeItem('user_profile')
+      localStorage.removeItem('user_country')
+      localStorage.removeItem('user_city')
     }
   }
 
@@ -68,6 +91,12 @@ class AuthService {
     
     const userStr = localStorage.getItem('user')
     return userStr ? JSON.parse(userStr) : null
+  }
+
+  getUserProfile(): 'tourist' | 'local' | 'pro' | null {
+    if (typeof window === 'undefined') return null
+    const profile = localStorage.getItem('user_profile') as 'tourist' | 'local' | 'pro' | null
+    return profile || null
   }
 
   getAccessToken(): string | null {

@@ -12,15 +12,69 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, SlidersHorizontal } from "lucide-react"
 
+// Categories mapped to Google Places API types
+// Reference: https://developers.google.com/maps/documentation/places/web-service/supported_types
 const categories = [
-  { id: "museums", label: "Museums & Galleries" },
-  { id: "landmarks", label: "Landmarks" },
-  { id: "parks", label: "Parks & Nature" },
-  { id: "entertainment", label: "Entertainment" },
-  { id: "food", label: "Food & Dining" },
-  { id: "shopping", label: "Shopping" },
-  { id: "nightlife", label: "Nightlife" },
-  { id: "tours", label: "Tours & Activities" },
+  // Culture & Arts
+  { id: "museum", label: "Museums", googleType: "museum" },
+  { id: "art_gallery", label: "Art Galleries", googleType: "art_gallery" },
+  { id: "tourist_attraction", label: "Tourist Attractions", googleType: "tourist_attraction" },
+  { id: "church", label: "Churches & Temples", googleType: "church" },
+  { id: "historical_site", label: "Historical Sites", googleType: "historical_site" },
+  
+  // Entertainment & Recreation
+  { id: "amusement_park", label: "Amusement Parks", googleType: "amusement_park" },
+  { id: "aquarium", label: "Aquariums", googleType: "aquarium" },
+  { id: "zoo", label: "Zoos", googleType: "zoo" },
+  { id: "park", label: "Parks & Nature", googleType: "park" },
+  { id: "stadium", label: "Stadiums & Arenas", googleType: "stadium" },
+  { id: "movie_theater", label: "Movie Theaters", googleType: "movie_theater" },
+  { id: "night_club", label: "Nightlife & Clubs", googleType: "night_club" },
+  { id: "casino", label: "Casinos", googleType: "casino" },
+  
+  // Food & Dining
+  { id: "restaurant", label: "Restaurants", googleType: "restaurant" },
+  { id: "cafe", label: "Cafes & Coffee", googleType: "cafe" },
+  { id: "bar", label: "Bars & Pubs", googleType: "bar" },
+  { id: "bakery", label: "Bakeries", googleType: "bakery" },
+  { id: "meal_takeaway", label: "Takeout", googleType: "meal_takeaway" },
+  
+  // Shopping
+  { id: "shopping_mall", label: "Shopping Malls", googleType: "shopping_mall" },
+  { id: "clothing_store", label: "Clothing Stores", googleType: "clothing_store" },
+  { id: "supermarket", label: "Supermarkets", googleType: "supermarket" },
+  { id: "grocery_or_supermarket", label: "Grocery Stores", googleType: "grocery_or_supermarket" },
+  { id: "jewelry_store", label: "Jewelry Stores", googleType: "jewelry_store" },
+  { id: "book_store", label: "Bookstores", googleType: "book_store" },
+  
+  // Accommodation & Travel
+  { id: "lodging", label: "Hotels & Lodging", googleType: "lodging" },
+  { id: "campground", label: "Campgrounds", googleType: "campground" },
+  { id: "rv_park", label: "RV Parks", googleType: "rv_park" },
+  
+  // Transportation
+  { id: "airport", label: "Airports", googleType: "airport" },
+  { id: "train_station", label: "Train Stations", googleType: "train_station" },
+  { id: "bus_station", label: "Bus Stations", googleType: "bus_station" },
+  { id: "subway_station", label: "Subway Stations", googleType: "subway_station" },
+  
+  // Health & Fitness
+  { id: "gym", label: "Gyms & Fitness", googleType: "gym" },
+  { id: "spa", label: "Spas & Wellness", googleType: "spa" },
+  { id: "hospital", label: "Hospitals", googleType: "hospital" },
+  { id: "pharmacy", label: "Pharmacies", googleType: "pharmacy" },
+  
+  // Education & Services
+  { id: "library", label: "Libraries", googleType: "library" },
+  { id: "university", label: "Universities", googleType: "university" },
+  { id: "school", label: "Schools", googleType: "school" },
+  { id: "bank", label: "Banks", googleType: "bank" },
+  { id: "atm", label: "ATMs", googleType: "atm" },
+  
+  // Activities & Tours
+  { id: "bowling_alley", label: "Bowling", googleType: "bowling_alley" },
+  { id: "golf_course", label: "Golf Courses", googleType: "golf_course" },
+  { id: "tourist_info", label: "Tourist Information", googleType: "tourist_info" },
 ]
 
 const durations = [
@@ -211,10 +265,167 @@ export default function AdvancedFilters({ initialCategory, initialMinRating, ini
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Categories</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Filter by Google Places types</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {categories.map((category) => (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+              {/* Culture & Arts */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Culture & Arts</h4>
+                <div className="space-y-2">
+                  {categories.slice(0, 5).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Entertainment & Recreation */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Entertainment</h4>
+                <div className="space-y-2">
+                  {categories.slice(5, 13).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Food & Dining */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Food & Dining</h4>
+                <div className="space-y-2">
+                  {categories.slice(13, 18).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Shopping */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Shopping</h4>
+                <div className="space-y-2">
+                  {categories.slice(18, 24).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Accommodation & Travel */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Accommodation</h4>
+                <div className="space-y-2">
+                  {categories.slice(24, 27).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Transportation */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Transportation</h4>
+                <div className="space-y-2">
+                  {categories.slice(27, 31).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Health & Fitness */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Health & Fitness</h4>
+                <div className="space-y-2">
+                  {categories.slice(31, 35).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Education & Services */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Education & Services</h4>
+                <div className="space-y-2">
+                  {categories.slice(35, 40).map((category) => (
+                    <div key={category.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`search-${category.id}`}
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <Label htmlFor={`search-${category.id}`} className="cursor-pointer text-sm font-normal">
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activities & Tours */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Activities</h4>
+                <div className="space-y-2">
+                  {categories.slice(40).map((category) => (
                 <div key={category.id} className="flex items-center gap-2">
                   <Checkbox
                     id={`search-${category.id}`}
@@ -226,6 +437,8 @@ export default function AdvancedFilters({ initialCategory, initialMinRating, ini
                   </Label>
                 </div>
               ))}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
